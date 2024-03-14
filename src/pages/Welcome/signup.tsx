@@ -1,9 +1,13 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Label } from "../../components/FormComponents/label";
 import { Input } from "../../components/FormComponents/input";
 import { cn } from "../../utils/cn";
 import { IconBrandGithub, IconBrandGoogle } from "@tabler/icons-react";
+
+import { useForm } from "react-hook-form";
+import axios from "axios";
+import { useToast } from "../../../@/components/ui/use-toast";
 
 interface SignupFormDemoInterface {
   setLogin: React.Dispatch<React.SetStateAction<boolean>>;
@@ -12,16 +16,57 @@ interface SignupFormDemoInterface {
 export const SignupFormDemo: React.FC<SignupFormDemoInterface> = ({
   setLogin,
 }) => {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log("Form submitted");
-  };
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
 
   const changeLogin = () => {
     setLogin(true);
   };
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm();
+
+  const onRegister = async (data: any) => {
+    try {
+      setLoading(true);
+      const res = await axios.post(`/api/user/register`, data);
+      console.log(res.data);
+      if (res.data.error == false) {
+        toast({
+          title: res.data.message,
+          description: `Congrats! Welcomee to Hike ${res.data.data.username}`,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Registration Issue",
+          description: `Error: ${res.data.message}`,
+        });
+      }
+    } catch (error: any) {
+      console.log(error);
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: `Error: ${error.response.data.message}!`,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const errorMessages = {
+    username: errors?.username?.message,
+    email: errors?.email?.message,
+    password: errors?.password?.message,
+  };
+
   return (
-    <div className="max-w-md h-full w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-black">
+    <div className="max-w-md h-full flex flex-col justify-center w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-black/[0.96] antialiased">
       <h2 className="font-bold text-xl text-neutral-800 dark:text-neutral-200">
         Welcome to Hike
       </h2>
@@ -29,61 +74,106 @@ export const SignupFormDemo: React.FC<SignupFormDemoInterface> = ({
         Signup to Hike if you can because we don&apos;t have a login flow yet
       </p>
 
-      {/* TODO: Add moving gradient maybe maybe? */}
-      {/* content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: var(--line-width);
-    background: conic-gradient(from calc(var(--angle) + var(--start-angle)), transparent 0, var(--line-color) 20%, transparent 25%);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask-composite: xor;
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    animation: inherit;
-
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    filter: drop-shadow(0 0 10px var(--line-color)); */}
-      <form className="my-8" onSubmit={handleSubmit}>
-        {/* <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mb-4">
-          <LabelInputContainer>
-            <Label htmlFor="firstname">First name</Label>
-            <Input id="firstname" placeholder="Tyler" type="text" />
-          </LabelInputContainer>
-          <LabelInputContainer>
-            <Label htmlFor="lastname">Last name</Label>
-            <Input id="lastname" placeholder="Durden" type="text" />
-          </LabelInputContainer>
-        </div> */}
-        <LabelInputContainer className="mb-4">
-          <Label htmlFor="name">Username</Label>
-          <Input id="name" placeholder="James Dunkan" type="text" />
-        </LabelInputContainer>
-        <LabelInputContainer className="mb-4">
-          <Label htmlFor="email">Email Address</Label>
-          <Input id="email" placeholder="projectmayhem@fc.com" type="email" />
-        </LabelInputContainer>
-        <LabelInputContainer className="mb-4">
-          <Label htmlFor="password">Password</Label>
-          <Input id="password" placeholder="••••••••" type="password" />
-        </LabelInputContainer>
-        <LabelInputContainer className="mb-8">
-          <Label htmlFor="twitterpassword">Confirm password</Label>
+      <form className="my-8" onSubmit={handleSubmit(onRegister)}>
+        {[
+          {
+            inputName: "username",
+            inputLabel: "Username",
+            inputType: "text",
+            inputPlaceholder: "James Dunkan",
+          },
+          {
+            inputName: "email",
+            inputLabel: "Email",
+            inputType: "email",
+            inputPlaceholder: "almightyGenius23@gmail.com",
+          },
+          {
+            inputName: "password",
+            inputLabel: "Password",
+            inputType: "password",
+            inputPlaceholder: "••••••••",
+          },
+        ].map((item, i) => (
+          <div key={i}>
+            <LabelInputContainer className="mb-[18px]">
+              <div className="flex items-center justify-between w-full">
+                <Label htmlFor={item.inputName}>{item.inputLabel}</Label>
+                {/* @ts-ignore */}
+                {errorMessages[item.inputName] && (
+                  <span className="text-red-300 text-sm font-semibold">
+                    {/* @ts-ignore */}
+                    {errorMessages[item.inputName]}
+                  </span>
+                )}
+              </div>
+              <Input
+                id={item.inputName}
+                placeholder={item.inputPlaceholder}
+                type={item.inputType}
+                {...register(item.inputName, {
+                  required: {
+                    value: true,
+                    message: "Required",
+                  },
+                  minLength: {
+                    value: 3,
+                    message: "Minimum 3 characters required",
+                  },
+                  maxLength: {
+                    value: 30,
+                    message: "Maximum length 30",
+                  },
+                })}
+              />
+            </LabelInputContainer>
+          </div>
+        ))}
+        <LabelInputContainer className="mb-[18px]">
+          <div className="flex items-center justify-between w-full">
+            <Label htmlFor="confirmPassword">Confirm password</Label>
+            {errors?.confirmPassword && (
+              <span className="text-red-300 text-sm font-semibold">
+                {/* @ts-ignore */}
+                {errors?.confirmPassword?.message}
+              </span>
+            )}
+          </div>
           <Input
-            id="twitterpassword"
+            id="confirmPassword"
             placeholder="••••••••"
-            type="twitterpassword"
+            type="password"
+            {...register("confirmPassword", {
+              required: {
+                value: true,
+                message: "Required",
+              },
+              minLength: {
+                value: 3,
+                message: "Minimum 3 characters required",
+              },
+              maxLength: {
+                value: 30,
+                message: "Maximum length 30",
+              },
+              validate: {
+                passwordMatch: (value) =>
+                  value === watch("password") || "Passwords do not match",
+              },
+            })}
           />
         </LabelInputContainer>
 
         <button
-          className="bg-gradient-to-br relative group/btn from-black dark:from-zinc-900 dark:to-zinc-900 to-neutral-600 block dark:bg-zinc-800 w-full text-white rounded-md h-10 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:shadow-[0px_1px_0px_0px_var(--zinc-800)_inset,0px_-1px_0px_0px_var(--zinc-800)_inset]"
+          className={`bg-gradient-to-br relative group/btn from-black ${
+            loading
+              ? "dark:from-gray-800 dark:to-zinc-400"
+              : "dark:from-zinc-800 dark:to-zinc-900"
+          }  to-neutral-600 block dark:bg-zinc-800 w-full text-white rounded-md h-10 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:shadow-[0px_1px_0px_0px_var(--zinc-800)_inset,0px_-1px_0px_0px_var(--zinc-800)_inset]`}
           type="submit"
         >
-          Sign up &rarr;
+          {!loading ? <span>Register &rarr;</span> : "Registering..."}
+
           <BottomGradient />
         </button>
 

@@ -55,7 +55,7 @@ const Notifications = () => {
             return (
               <div
                 key={i}
-                className="flex items-center gap-2 bg-gray-700 p-2 rounded-lg"
+                className="flex items-center justify-around gap-2 bg-gray-700 p-2 rounded-lg"
               >
                 <img
                   className="h-7 rounded-lg"
@@ -63,8 +63,8 @@ const Notifications = () => {
                   alt={`Notification from ${notification.user}`}
                 />
                 <p className="text-sm">
-                  <span className="font-bold">{notification.user}</span> wants
-                  likes your photo
+                  <span className="font-bold">{notification.user}</span> likes
+                  your photo
                 </p>
                 <img
                   className="h-7 w-6 rounded-lg"

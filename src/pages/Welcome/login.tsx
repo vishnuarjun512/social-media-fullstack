@@ -1,28 +1,71 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Label } from "../../components/FormComponents/label";
 import { Input } from "../../components/FormComponents/input";
 import { cn } from "../../utils/cn";
 import { IconBrandGithub, IconBrandGoogle } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 
+import { useToast } from "../../../@/components/ui/use-toast";
+import { useForm } from "react-hook-form";
+import axios from "axios";
+
 interface LoginFormDemoInterface {
   setLogin: React.Dispatch<React.SetStateAction<boolean>>;
 }
+
 export const LoginFormDemo: React.FC<LoginFormDemoInterface> = ({
   setLogin,
 }) => {
   const navigate = useNavigate();
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log("Form submitted");
-  };
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
 
   const changeLogin = () => {
     setLogin(false);
   };
+
+  const onLogin = async (data: any) => {
+    try {
+      setLoading(true);
+      const res = await axios.post(`/api/user/login`, data);
+      if (res.data.error == false) {
+        toast({
+          title: res.data.message,
+          description: `Welcome back ${res.data.user.username}!`,
+        });
+        setTimeout(() => {
+          navigate(`/`);
+        }, 1000);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Oops! Something wrong.",
+          description: `Error: ${res.data.message}!`,
+        });
+      }
+    } catch (error: any) {
+      console.log(error);
+      if (error.response.status == 404) {
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: `Error: ${error.response.data.message}!`,
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="max-w-md h-full flex flex-col justify-center w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-black">
+    <div className="max-w-md h-full flex flex-col justify-center w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-black/[0.96] antialiased">
       <h2 className="font-bold text-xl text-neutral-800 dark:text-neutral-200">
         Welcome to Hike
       </h2>
@@ -30,47 +73,79 @@ export const LoginFormDemo: React.FC<LoginFormDemoInterface> = ({
         Login to socialize with all the individuals waiting for you
       </p>
 
-      {/* TODO: Add moving gradient maybe maybe? */}
-      {/* content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: var(--line-width);
-    background: conic-gradient(from calc(var(--angle) + var(--start-angle)), transparent 0, var(--line-color) 20%, transparent 25%);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask-composite: xor;
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    animation: inherit;
-
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    filter: drop-shadow(0 0 10px var(--line-color)); */}
-
-      <form className="my-8" onSubmit={handleSubmit}>
+      <form className="my-8" onSubmit={handleSubmit(onLogin)}>
         <LabelInputContainer className="mb-4">
-          <Label htmlFor="email">Email / Username</Label>
+          <div>
+            <Label htmlFor="username">Email / Username</Label>
+            {errors.username && (
+              <span className="text-red-300 text-sm font-semibold">
+                {/* @ts-ignore */}
+                {errors.username.message}
+              </span>
+            )}
+          </div>
+
           <Input
-            id="email"
-            placeholder="projectmayhem@fc.com / projectKiller512"
-            type="text"
+            placeholder="shadcn"
+            id="username"
+            {...register("username", {
+              required: {
+                value: true,
+                message: "Required",
+              },
+              minLength: {
+                value: 3,
+                message: "Minimum 3 characters required",
+              },
+              maxLength: {
+                value: 30,
+                message: "Maximum length 30",
+              },
+            })}
           />
         </LabelInputContainer>
+
         <LabelInputContainer className="mb-4">
-          <Label htmlFor="password">Password</Label>
-          <Input id="password" placeholder="••••••••" type="password" />
+          <div>
+            <Label htmlFor="password">Password</Label>
+            {errors.password && (
+              <span className="text-red-300 text-sm font-semibold">
+                {/* @ts-ignore */}
+                {errors.password.message}
+              </span>
+            )}
+          </div>
+          <Input
+            id="password"
+            placeholder="••••••••"
+            type="password"
+            {...register("password", {
+              required: {
+                value: true,
+                message: "Required",
+              },
+              minLength: {
+                value: 3,
+                message: "Minimum 3 characters required",
+              },
+              maxLength: {
+                value: 30,
+                message: "Maximum length 30",
+              },
+            })}
+          />
         </LabelInputContainer>
 
         <button
-          className="bg-gradient-to-br relative group/btn from-black dark:from-zinc-900 dark:to-zinc-900 to-neutral-600 block dark:bg-zinc-800 w-full text-white rounded-md h-10 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:shadow-[0px_1px_0px_0px_var(--zinc-800)_inset,0px_-1px_0px_0px_var(--zinc-800)_inset]"
+          className={`bg-gradient-to-br relative group/btn from-black ${
+            loading
+              ? "dark:from-gray-800 dark:to-zinc-400"
+              : "dark:from-zinc-800 dark:to-zinc-900"
+          }  to-neutral-600 block dark:bg-zinc-800 w-full text-white rounded-md h-10 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:shadow-[0px_1px_0px_0px_var(--zinc-800)_inset,0px_-1px_0px_0px_var(--zinc-800)_inset]`}
           type="submit"
-          onClick={() => {
-            navigate("/");
-          }}
         >
-          Sign in &rarr;
+          {!loading ? <span>Sign in &rarr;</span> : "Signing in ..."}
+
           <BottomGradient />
         </button>
 

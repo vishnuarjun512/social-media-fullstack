@@ -87,12 +87,11 @@ const SideMenu = () => {
             <AlertDialogCancel className="text-gray-300">
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction
-              className="
-              hover:bg-red-500 hover:text-white"
-            >
-              <Link to={`/welcome`}>Continue</Link>
-            </AlertDialogAction>
+            <Link to={`/welcome`}>
+              <AlertDialogAction className="hover:bg-red-500 hover:text-white">
+                Continue
+              </AlertDialogAction>
+            </Link>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
