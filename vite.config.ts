@@ -7,12 +7,13 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api':"https://social-media-backend-2dqa.onrender.com"
+      // '/api':"https://social-media-backend-2dqa.onrender.com"
+      '/api':"http://localhost:3000"
     },
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(__dirname, "./"),
     },
   },
 })

@@ -11,9 +11,38 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "../../../../../@/components/ui/alert-dialog";
+} from "@/@/components/ui/alert-dialog";
+import { useUserStore } from "@/src/states/user.state";
+import { useEffect } from "react";
+import axios from "axios";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/@/components/ui/button";
+
+import UpdateForm from "./UpdateForm";
 
 const SideMenu = () => {
+  const { logUserInfo, user, setUserInfo, userInfo } = useUserStore();
+
+  useEffect(() => {
+    async function getUserInfo() {
+      const res = await axios.get(`/api/user/getUser/${user._id}`);
+      setUserInfo(res.data.info);
+
+      setTimeout(() => {
+        logUserInfo();
+      }, 2000);
+    }
+
+    getUserInfo();
+  }, []);
+
   return (
     <div className="bg-gray-800/70 py-2 rounded-xl px-3 flex h-full flex-col items-center justify-between gap-4">
       <div className="bg-gray-700 flex flex-col items-center justify-center gap-2 w-full rounded-xl">
@@ -33,22 +62,22 @@ const SideMenu = () => {
         </div>
         <div className="hidden md:flex flex-col items-center justify-center text-md gap-2">
           <p className="font-bold text-gray-200 text-lg leading-none">
-            John Doe
+            {user.username}
           </p>
           <p className="font-semibold text-gray-400 text-base leading-none">
-            @johndoe_512
+            {user.userId ? `@${user.userId}` : "Unique ID not set"}
           </p>
           <p className="font-semibold text-gray-200 text-sm leading-none">
-            &#10024; Socially Awkward Nerd &#10024;
+            &#10024; {user.bio} &#10024;
           </p>
         </div>
         <div className="text-sm font-semibold border-y-[2px] my-2 border-gray-600 p-2 flex items-center justify-around w-full">
           {[
-            { name: "Following", count: 312 },
-            { name: "Posts", count: 81 },
-            { name: "Followers", count: 118 },
+            { name: "Following", count: userInfo?.follow?.followingCount || 0 },
+            { name: "Posts", count: userInfo?.posts },
+            { name: "Followers", count: userInfo?.follow?.followersCount || 0 },
           ].map((item, i) => (
-            <>
+            <div key={i}>
               <div className="cursor-pointer hover:scale-105 duration-100 ease-in-out transition-all flex flex-col items-center justify-center">
                 <p>{item.count}</p>
                 <p className="text-gray-400">{item.name}</p>
@@ -56,22 +85,43 @@ const SideMenu = () => {
               {i != 2 && (
                 <div className="cursor-pointer hover:scale-105 duration-100 ease-in-out transition-all w-[2px] h-full bg-gray-600" />
               )}
-            </>
+            </div>
           ))}
         </div>
-        <div className="flex cursor-pointer hover:underline font-bold pb-3 text-blue-400 justify-center items-center w-full">
-          My Profile
+        <div className="w-full pb-3">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className=" flex cursor-pointer hover:underline font-bold pb-3 text-blue-400 text-xl justify-center items-center w-full bg-transparent hover:bg-transparent border-none"
+              >
+                Edit Profile
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] bg-black/50">
+              <DialogHeader>
+                <DialogTitle className="text-2xl text-gray-200">
+                  Edit profile
+                </DialogTitle>
+                <DialogDescription>
+                  Make changes to your profile here. Click save when you're
+                  done.
+                </DialogDescription>
+              </DialogHeader>
+              <UpdateForm />
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
       <AlertDialog>
         <AlertDialogTrigger className="w-full">
-          <button className="group bg-red-500 w-full rounded-full hover:bg-red-600 hover:scale-110 transition-all duration-200 ease-in-out p-3 justify-center flex items-center gap-2">
+          <div className="group bg-red-500 w-full rounded-full hover:bg-red-600 hover:scale-110 transition-all duration-200 ease-in-out p-3 justify-center flex items-center gap-2">
             <IconDoorExit />
             <p className="hidden md:flex font-semibold group-hover:font-bold text-xl">
               Logout
             </p>
-          </button>
+          </div>
         </AlertDialogTrigger>
         <AlertDialogContent className="bg-black/90">
           <AlertDialogHeader>

@@ -51,7 +51,7 @@ export const SignupFormDemo: React.FC<SignupFormDemoInterface> = ({
       console.log(error);
       toast({
         variant: "destructive",
-        title: "Login Failed",
+        title: "Registration Failed",
         description: `Error: ${error.response.data.message}!`,
       });
     } finally {

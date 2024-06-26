@@ -6,9 +6,11 @@ import { cn } from "../../utils/cn";
 import { IconBrandGithub, IconBrandGoogle } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 
-import { useToast } from "../../../@/components/ui/use-toast";
+import { useToast } from "@/@/components/ui/use-toast";
 import { useForm } from "react-hook-form";
+
 import axios from "axios";
+import { useUserStore } from "@/src/states/user.state";
 
 interface LoginFormDemoInterface {
   setLogin: React.Dispatch<React.SetStateAction<boolean>>;
@@ -20,6 +22,7 @@ export const LoginFormDemo: React.FC<LoginFormDemoInterface> = ({
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const { setUser } = useUserStore();
 
   const {
     register,
@@ -36,9 +39,11 @@ export const LoginFormDemo: React.FC<LoginFormDemoInterface> = ({
       setLoading(true);
       const res = await axios.post(`/api/user/login`, data);
       if (res.data.error == false) {
+        const loggedInUser = res.data.user.username;
+        setUser(res.data.user);
         toast({
           title: res.data.message,
-          description: `Welcome back ${res.data.user.username}!`,
+          description: `Welcome back ${loggedInUser}!`,
         });
         setTimeout(() => {
           navigate(`/`);
@@ -51,8 +56,7 @@ export const LoginFormDemo: React.FC<LoginFormDemoInterface> = ({
         });
       }
     } catch (error: any) {
-      console.log(error);
-      if (error.response.status == 404) {
+      if (error.response.status == 401) {
         toast({
           variant: "destructive",
           title: "Login Failed",
